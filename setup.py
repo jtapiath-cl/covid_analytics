@@ -19,7 +19,9 @@ transitorios (el repositorio se mantiene persistente para minimizar los tiempos 
 import os
 import glob
 import shutil
+import patoolib
 import subprocess
+import urllib.request
 import pandas as pd
 # import from
 from git import Repo
@@ -99,8 +101,14 @@ def procesar_producto_2(target:str, grupo:str, archivo:str, destination:str):
     df.to_csv(os.path.join(destination, f"{grupo}.csv"), index = False)
     return None
 
+def procesar_externo(input_dir:str, input_file:str, output_dir:str, output_file:str):
+    df = pd.read_csv(os.path.join(input_dir, input_file), sep = ";")
+    df.to_csv(os.path.join(output_dir, f"{output_file}.csv"), sep = ",", index = False)
+    return None
+
 # parametros
 url_covid = "https://github.com/MinCiencia/Datos-COVID19.git"
+url_comunas = "https://www.ine.cl/docs/default-source/censo-de-poblacion-y-vivienda/bbdd/censo-2017/csv/csv-identificaci%C3%B3n-geogr%C3%A1fica-censo-2017.rar?sfvrsn=1ae6f56c_2&download=true"
 dir_covid = "source"
 dir_target = "target"
 curr_wd = os.getcwd()
@@ -109,6 +117,8 @@ path_target = os.path.join(curr_wd, dir_target)
 ## ubicaciones fisicas de los archivos
 base_dir = os.path.join(curr_wd, "target", "output")
 output_dir = os.path.join(curr_wd, "target", "csv")
+download_dir = os.path.join(curr_wd, "target")
+geografia_dir = os.path.join(curr_wd, "target", "geografia")
 prod02 = os.path.join(curr_wd, "source", "output", "producto2")
 prod04 = os.path.join(curr_wd, "source", "output", "producto4")
 prod05 = os.path.join(curr_wd, "source", "output", "producto5")
@@ -123,6 +133,7 @@ target07 = os.path.join(path_target, "output", "producto7")
 target63 = os.path.join(path_target, "output", "producto63")
 target64 = os.path.join(path_target, "output", "producto64")
 target74 = os.path.join(path_target, "output", "producto74")
+geografia_rar = os.path.join(download_dir, "csv_geografica.rar")
 
 # obtener repo de MinCiencia
 if not os.path.exists(path_covid):
@@ -218,11 +229,33 @@ print_log("Procesando datos del 'producto74'...")
 procesar_producto_2(target = target74, grupo = "paso_a_paso_comuna", archivo = "paso_a_paso_std", destination = output_dir)
 print_log("Listo!")
 
+# descargar archivo de comunas del censo 2017
+print_log("Descargando archivos del Censo 2017...")
+if not os.path.exists(download_dir):
+    os.makedirs(download_dir)
+
+urllib.request.urlretrieve(url_comunas, geografia_rar)
+print_log("Listo!")
+
+## procesando archivos de geografia del censo 2017
+print_log("Procesando archivos del Censo 2017...")
+if not os.path.exists(geografia_dir):
+    os.makedirs(geografia_dir)
+
+patoolib.extract_archive(geografia_rar, outdir = geografia_dir)
+
+procesar_externo(input_dir = geografia_dir, input_file = "microdato_censo2017-comunas.csv", output_dir = output_dir, output_file = "comunas")
+procesar_externo(input_dir = geografia_dir, input_file = "microdato_censo2017-regiones.csv", output_dir = output_dir, output_file = "regiones")
+
+print_log("Listo!")
+
 # borrando archivos temporales
 print_log("Borrando archivos creados en el proceso...")
 try:
     shutil.rmtree(base_dir)
+    shutil.rmtree(geografia_dir)
+    os.remove(geografia_rar)
 except OSError as e:
-    print(f"Error: {base_dir}: {e.strerror}")
+    print(f"Error: {e.strerror}")
 finally:
     print_log("Listo!")
