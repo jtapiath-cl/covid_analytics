@@ -59,49 +59,49 @@ del df
 # procesar los casos por region
 
 columnas = {
-"Fecha": "fecha",
-"Region": "region_1",
-"Región": "region_2",
-"Casos nuevos totales": "nuevos_1",
-"Casos  nuevos": "nuevos_2",
-" Casos nuevos": "nuevos_3",
-"Casos nuevos": "nuevos_4",
-"Casos  nuevos  totales": "nuevos_5",
-"Casos nuevos totales ": "nuevos_6",
-"Casos totales acumulados": "casos_1",
-"Casos  totales": "casos_2",
-" Casos totales": "casos_3",
-"Casos totales": "casos_4",
-"Casos  totales  acumulados": "casos_5",
-"Casos totales acumulados ": "casos_6",
-"Casos nuevos con sintomas": "nuevos_con_sintomas_1",
-"Casos  nuevos  con  sintomas": "nuevos_con_sintomas_2",
-"Casos nuevos con sintomas ": "nuevos_con_sintomas_3",
-"Casos nuevos sin sintomas*": "nuevos_sin_sintomas_1",
-"Casos  nuevos  sin  sintomas*": "nuevos_sin_sintomas_2",
-"Casos nuevos sin sintomas* ": "nuevos_sin_sintomas_3",
-"Casos  nuevos  sin  sintomas": "nuevos_sin_sintomas_4",
-" Casos fallecidos": "fallecidos_1",
-"Fallecidos": "fallecidos_2",
-"Fallecidos totales": "fallecidos_3",
-"Fallecidos totales ": "fallecidos_4",
-"Casos probables acumulados": "probables_acumulados_1",
-"Casos probables acumulados ": "probables_acumulados_2",
-"%  Casos  totales**": "porcentaje_total_1",
-"% Total": "porcentaje_total_2",
-"%  Total": "porcentaje_total_3",
-"% Total ": "porcentaje_total_4",
-"Casos confirmados por antigeno": "confirmados_antigeno_1",
-"Casos nuevos confirmados por antigeno": "confirmados_antigeno_2",
-"Casos activos probables": "activos_probables_1",
-"Casos activos probables ": "activos_probables_2",
-"Casos confirmados recuperados": "recuperados_1",
-" Casos recuperados": "recuperados_2",
-"Casos activos confirmados": "activos_confirmados",
-"Casos nuevos sin notificar": "nuevos_sin_notificar",
-"Casos con sospecha de reinfeccion": "sospecha_reinfeccion",
-"Tasa  *100000": "tasa_cien_mil",
-"Incremento  diario": "incremento_diario"
+    "Fecha": "fecha",
+    "Region": "region_1",
+    "Región": "region_2",
+    "Casos nuevos totales": "nuevos_1",
+    "Casos  nuevos": "nuevos_2",
+    " Casos nuevos": "nuevos_3",
+    "Casos nuevos": "nuevos_4",
+    "Casos  nuevos  totales": "nuevos_5",
+    "Casos nuevos totales ": "nuevos_6",
+    "Casos totales acumulados": "casos_1",
+    "Casos  totales": "casos_2",
+    " Casos totales": "casos_3",
+    "Casos totales": "casos_4",
+    "Casos  totales  acumulados": "casos_5",
+    "Casos totales acumulados ": "casos_6",
+    "Casos nuevos con sintomas": "nuevos_con_sintomas_1",
+    "Casos  nuevos  con  sintomas": "nuevos_con_sintomas_2",
+    "Casos nuevos con sintomas ": "nuevos_con_sintomas_3",
+    "Casos nuevos sin sintomas*": "nuevos_sin_sintomas_1",
+    "Casos  nuevos  sin  sintomas*": "nuevos_sin_sintomas_2",
+    "Casos nuevos sin sintomas* ": "nuevos_sin_sintomas_3",
+    "Casos  nuevos  sin  sintomas": "nuevos_sin_sintomas_4",
+    " Casos fallecidos": "fallecidos_1",
+    "Fallecidos": "fallecidos_2",
+    "Fallecidos totales": "fallecidos_3",
+    "Fallecidos totales ": "fallecidos_4",
+    "Casos probables acumulados": "probables_acumulados_1",
+    "Casos probables acumulados ": "probables_acumulados_2",
+    "%  Casos  totales**": "porcentaje_total_1",
+    "% Total": "porcentaje_total_2",
+    "%  Total": "porcentaje_total_3",
+    "% Total ": "porcentaje_total_4",
+    "Casos confirmados por antigeno": "confirmados_antigeno_1",
+    "Casos nuevos confirmados por antigeno": "confirmados_antigeno_2",
+    "Casos activos probables": "activos_probables_1",
+    "Casos activos probables ": "activos_probables_2",
+    "Casos confirmados recuperados": "recuperados_1",
+    " Casos recuperados": "recuperados_2",
+    "Casos activos confirmados": "activos_confirmados",
+    "Casos nuevos sin notificar": "nuevos_sin_notificar",
+    "Casos con sospecha de reinfeccion": "sospecha_reinfeccion",
+    "Tasa  *100000": "tasa_cien_mil",
+    "Incremento  diario": "incremento_diario"
 }
 columnas_sort = ["fecha", 
     "region", "region_3", "region_4", "region_1", "region_2",
@@ -208,5 +208,70 @@ df_keep_2 = df_keep.merge(
     rename(columns = {"REGION": "cod_region"})
 
 df_keep_2.to_parquet(path = os.path.join(parquet_files, "casos_por_region.parquet"))
-
 del df_keep, df_keep_2, df_regiones
+
+# procesar casos por comuna
+
+columnas = {
+    "Region": "region",
+    "Codigo region": "cod_region",
+    "Comuna": "comuna",
+    "Codigo comuna": "cod_comuna",
+    "Poblacion": "poblacion",
+    "Casos Confirmados": "casos",
+    "Fecha": "fecha"
+}
+df = pd.read_csv(os.path.join(csv_files, "casos_por_comuna.csv"))
+df_comunas = pd.read_csv(os.path.join(csv_files, "comunas.csv"))
+df_regiones = pd.read_csv(os.path.join(csv_files, "regiones.csv"))
+df.rename(columns = columnas, inplace = True)
+df.drop(columns = ["region", "comuna"], inplace = True)
+df_1 = df.merge(
+    right = df_comunas,
+    left_on = "cod_comuna",
+    right_on = "COMUNA",
+    how = "left"
+). \
+    merge(
+        right = df_regiones,
+        left_on = "cod_region",
+        right_on = "REGION",
+        how = "left"
+    ). \
+    drop(columns = ["COMUNA", "REGION"]). \
+    rename(columns = {"NOM_COMUNA": "comuna", "NOM_REGION": "region"})
+df_1["comuna"] = df_1.apply(lambda row : "DESCONOCIDA" if row.comuna is np.nan else row.comuna, axis = 1)
+df_1.to_parquet(path = os.path.join(parquet_files, "casos_por_comuna.parquet"))
+del df, df_1, df_comunas, df_regiones
+
+# procesar paso a paso
+
+columnas = ["codigo_region", "codigo_comuna", "zona", "Fecha", "Paso"]
+df = pd.read_csv(os.path.join(csv_files, "paso_a_paso_comuna.csv"))
+df_comunas = pd.read_csv(os.path.join(csv_files, "comunas.csv"))
+df_regiones = pd.read_csv(os.path.join(csv_files, "regiones.csv"))
+df_1 = df[columnas]. \
+    merge(
+        right = df_regiones,
+        left_on = "codigo_region",
+        right_on = "REGION",
+        how = "inner"
+    ). \
+    merge(
+        right = df_comunas,
+        left_on = "codigo_comuna",
+        right_on = "COMUNA",
+        how = "inner"
+    ). \
+    drop(columns = ["REGION", "COMUNA"]). \
+    rename(
+        columns = {
+            "Fecha": "fecha", 
+            "Paso": "paso",
+            "NOM_REGION": "region",
+            "NOM_COMUNA": "comuna"
+        }
+    )
+df_1["zona"] = df_1.apply(lambda row: row.zona.upper(), axis = 1)
+df_1.to_parquet(path = os.path.join(parquet_files, "paso_a_paso_por_comuna.parquet"))
+del df, df_1, df_comunas, df_regiones
